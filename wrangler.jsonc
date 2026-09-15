@@ -1,0 +1,19 @@
+// The worker's configuration as its tests need it: the entry module, the
+// compatibility settings and the limits. The tests supply the API binding
+// themselves (vitest.config.js); where the worker is deployed is not part of
+// this repository.
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "invoice-data-extraction-mcp-server",
+	"main": "src/index.js",
+	"compatibility_date": "2026-06-11",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"observability": {
+		"enabled": true
+	},
+	"limits": {
+		"cpu_ms": 5000
+	}
+}

@@ -1,0 +1,25 @@
+{
+	"name": "invoice-data-extraction-mcp-server",
+	"version": "0.1.1",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"deploy": "wrangler deploy",
+		"dev": "wrangler dev",
+		"start": "wrangler dev",
+		"test": "vitest run",
+		"bundle": "wrangler deploy --dry-run --outdir dist"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/client": "2.0.0",
+		"@modelcontextprotocol/sdk": "1.30.0",
+		"@modelcontextprotocol/server": "2.0.0",
+		"agents": "^0.23.0",
+		"zod": "^4.2.0"
+	},
+	"devDependencies": {
+		"@cloudflare/vitest-plugin": "^1.1.8",
+		"vitest": "^4.1.0",
+		"wrangler": "^4.131.0"
+	}
+}

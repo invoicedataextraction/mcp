@@ -1,0 +1,22 @@
+{
+	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+	"name": "com.invoicedataextraction/invoice-data-extraction",
+	"title": "Invoice Data Extraction",
+	"description": "Invoices and other financial documents to rows: upload, say what to extract, read the rows.",
+	"websiteUrl": "https://invoicedataextraction.com/docs/mcp",
+	"version": "0.1.1",
+	"remotes": [
+		{
+			"type": "streamable-http",
+			"url": "https://mcp.invoicedataextraction.com/mcp",
+			"headers": [
+				{
+					"name": "Authorization",
+					"description": "Bearer <your API key>. Keys are created at https://invoicedataextraction.com/dashboard?view=API.",
+					"isRequired": true,
+					"isSecret": true
+				}
+			]
+		}
+	]
+}
