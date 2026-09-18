@@ -4,7 +4,9 @@ One remote server gives an agent in Claude Code, Codex, Cursor, Hermes, OpenClaw
 
 ## Connect your harness
 
-The server is at `https://mcp.invoicedataextraction.com/mcp`, over streamable HTTP. Every request carries your API key as a bearer token, `Authorization: Bearer <key>`. Keys are created in the dashboard at https://invoicedataextraction.com/dashboard?view=API; every account includes 50 free pages per month, and no card is needed. Keep the key in the environment variable `INVOICE_DATA_EXTRACTION_API_KEY`, the name the skill and the SDK docs use, and let the harness read it from there.
+The server is at `https://mcp.invoicedataextraction.com/mcp`, over streamable HTTP. Every request carries your API key as a bearer token, `Authorization: Bearer <key>`. Keys are created in the dashboard at https://invoicedataextraction.com/dashboard?view=API; every account includes 50 free pages per month, and no card is needed. The key is a secret: keep it wherever your harness keeps secrets, never in a conversation. The settings below read it from the environment variable `INVOICE_DATA_EXTRACTION_API_KEY`, the name the skill and the SDK docs use. A store that binds a secret to the hosts it may be sent to binds this one to `mcp.invoicedataextraction.com`.
+
+The settings below are each harness's own, as its documentation gave them in September 2026. Where your version differs, what it needs is the same: the address, and the key as a bearer header, read from wherever the harness keeps secrets.
 
 **Claude Code**
 
@@ -58,7 +60,7 @@ mcp_servers:
       Authorization: "Bearer ${INVOICE_DATA_EXTRACTION_API_KEY}"
 ```
 
-**OpenClaw**, under `mcp.servers` in `~/.openclaw/openclaw.json`; name the transport, because OpenClaw assumes SSE without it:
+**OpenClaw**, under `mcp.servers` in `~/.openclaw/openclaw.json`, with the key in `~/.openclaw/.env`; name the transport, because OpenClaw assumes SSE without it:
 
 ```json5
 "invoice-data-extraction": {
@@ -75,7 +77,7 @@ gemini mcp add --transport http --header "Authorization: Bearer $INVOICE_DATA_EX
   invoice-data-extraction https://mcp.invoicedataextraction.com/mcp
 ```
 
-Any other client that speaks MCP over streamable HTTP connects the same way: the address, and the key as a bearer header. A request without the key is refused with a message saying where keys are made.
+Any other client that speaks MCP over streamable HTTP connects the same way. A request without the key is refused with a message saying where keys are made.
 
 ## The tools
 
@@ -98,7 +100,7 @@ Every tool returns the API's response as JSON, with `next_steps` beside it sayin
 
 ## How files get in
 
-The server never carries file bytes: the agent uploads them itself with its own tools. `create_upload_session` returns, for each file, the addresses to PUT its parts to. A file smaller than `part_size` (8,388,608 bytes today) is one part; otherwise `total_parts = ceil(file_size_bytes / part_size)`, and the last part is smaller. The agent PUTs the raw bytes of each part to its address with no other headers, keeps the `ETag` response header of each PUT with its quotes, and calls `complete_file_uploads`. Each address is valid for 15 minutes. For more than 100 files, `create_upload_session` returns the session alone, and `get_upload_part_urls` gives each file's addresses just before it is uploaded. Files are independent: one that fails does not stop the others, and only completed files can be named in an extraction.
+The server never carries file bytes: the agent uploads them itself with its own tools. `create_upload_session` returns, for each file, the addresses to PUT its parts to. A file smaller than `part_size` (8,388,608 bytes today) is one part; otherwise `total_parts = ceil(file_size_bytes / part_size)`, and the last part is smaller. The agent PUTs the raw bytes of each part to its address with no other headers, keeps the `ETag` response header of each PUT with its quotes, and calls `complete_file_uploads`. Each address is valid for 15 minutes. The addresses, and the download addresses of the output files, are on a storage host separate from this server and the API, and the key is never sent to it; where outbound hosts are allowlisted, allow the host in those addresses. Give each file the name the owner knows it by, because `file_name` is what the `Source File` column shows. For more than 100 files, `create_upload_session` returns the session alone, and `get_upload_part_urls` gives each file's addresses just before it is uploaded. Files are independent: one that fails does not stop the others, and only completed files can be named in an extraction.
 
 ## Running an extraction
 
