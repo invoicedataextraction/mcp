@@ -103,7 +103,7 @@ const OPTIONS = z
 		affected_field_fill_color: COLOR.optional().describe("XLSX highlight for the cells a Review Needed warning refers to. Defaults to the account's preference."),
 		send_completion_email: z.boolean().optional().describe("Email the account when this extraction finishes. Default false."),
 		json_typed_values: z.boolean().optional().describe("Default true through this server: numbers as numbers, yes/no fields as booleans, empty cells as null in the rows and the JSON file."),
-		ask_questions: z.boolean().optional().describe("Default true through this server: the extraction can stop and ask when the documents leave something unsettled; the status is then input_required and answer_extraction_questions continues it. Set false for a job nobody can answer for."),
+		ask_questions: z.boolean().optional().describe("Default true through this server: the extraction can stop and ask when the documents leave something unsettled; the status is then input_required and answer_extraction_questions continues it. Set false only when the owner has said so."),
 	})
 	.optional();
 
