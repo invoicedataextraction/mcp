@@ -76,7 +76,7 @@ async function mapConcurrent(items, fn) {
 }
 
 const PROMPT = z.union([
-	z.string().min(1).max(2500).describe("What to extract, in plain words (up to 2,500 characters)."),
+	z.string().min(1).max(5000).describe("What to extract, in plain words (up to 5,000 characters)."),
 	z
 		.object({
 			fields: z
