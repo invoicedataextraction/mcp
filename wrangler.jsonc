@@ -1,19 +1,29 @@
 // The worker's configuration as its tests need it: the entry module, the
-// compatibility settings and the limits. The tests supply the API binding
-// themselves (vitest.config.js); where the worker is deployed is not part of
-// this repository.
+// compatibility settings, the limits, the sign-in's storage and its
+// addresses. The tests supply the API binding themselves (vitest.config.js);
+// where the worker is deployed is not part of this repository.
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "invoice-data-extraction-mcp-server",
 	"main": "src/index.js",
 	"compatibility_date": "2026-06-11",
 	"compatibility_flags": [
-		"nodejs_compat"
+		"nodejs_compat",
+		"global_fetch_strictly_public"
 	],
 	"observability": {
 		"enabled": true
 	},
 	"limits": {
 		"cpu_ms": 5000
+	},
+	"kv_namespaces": [
+		{
+			"binding": "OAUTH_KV"
+		}
+	],
+	"vars": {
+		"MCP_RESOURCE": "https://mcp.invoicedataextraction.com/mcp",
+		"SITE_ORIGIN": "https://invoicedataextraction.com"
 	}
 }

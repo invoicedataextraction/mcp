@@ -4,7 +4,7 @@
 	"title": "Invoice Data Extraction",
 	"description": "Invoices and other financial documents to rows: upload, say what to extract, read the rows.",
 	"websiteUrl": "https://invoicedataextraction.com/docs/mcp",
-	"version": "0.1.1",
+	"version": "0.2.0",
 	"remotes": [
 		{
 			"type": "streamable-http",
@@ -12,8 +12,8 @@
 			"headers": [
 				{
 					"name": "Authorization",
-					"description": "Bearer <your API key>. Keys are created at https://invoicedataextraction.com/dashboard?view=API.",
-					"isRequired": true,
+					"description": "Bearer <your API key>, for a client that sends a key. Keys are created at https://invoicedataextraction.com/dashboard?view=API. A client that supports sign-in connects without it.",
+					"isRequired": false,
 					"isSecret": true
 				}
 			]

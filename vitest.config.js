@@ -9,6 +9,8 @@ export default defineConfig({
 		cloudflareTest({
 			wrangler: { configPath: "./wrangler.jsonc" },
 			miniflare: {
+				// The secret the website and the worker share for the sign-in's handoff.
+				bindings: { CONNECT_SECRET: "test-connect-secret" },
 				serviceBindings: {
 					API: () => new Response("the tests mock the API binding", { status: 500 }),
 				},

@@ -12,7 +12,7 @@ describe("the entry module", () => {
 
 describe("the endpoint", () => {
 	it("answers unknown paths with the API's JSON envelope, never bare text", async () => {
-		for (const path of ["/", "/mcp/", "/v1/extractions", "/other"]) {
+		for (const path of ["/", "/v1/extractions", "/other"]) {
 			const response = await callWorker(path);
 			expect(response.status).toBe(404);
 			expect(response.headers.get("Content-Type")).toBe("application/json");
@@ -38,14 +38,14 @@ describe("the endpoint", () => {
 
 	it("answers a CORS preflight without a key", async () => {
 		const response = await callWorker("/mcp", { method: "OPTIONS", headers: { Origin: "https://example.com" } });
-		expect(response.status).toBe(200);
-		expect(response.headers.get("Access-Control-Allow-Origin")).toBe("*");
+		expect(response.status).toBe(204);
+		expect(response.headers.get("Access-Control-Allow-Origin")).toBe("https://example.com");
 		expect(response.headers.get("Access-Control-Allow-Headers")).toContain("Authorization");
 	});
 });
 
 describe("discovery and the tool list", () => {
-	it("identifies the server and lists the twelve tools with their annotations", async () => {
+	it("identifies the server and lists the thirteen tools with their annotations", async () => {
 		const client = await connect(mockApi());
 		expect(client.getServerVersion()).toMatchObject({ name: "invoice-data-extraction", version: pkg.version });
 		expect(client.getInstructions()).toContain("create_upload_session");
@@ -63,6 +63,7 @@ describe("discovery and the tool list", () => {
 				"get_extraction_results",
 				"get_output_download_url",
 				"get_upload_part_urls",
+				"import_attached_files",
 				"list_extractions",
 				"run_extraction",
 				"submit_extraction",

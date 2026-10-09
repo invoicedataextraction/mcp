@@ -23,6 +23,70 @@ async function call(api, name, args) {
 	}
 }
 
+describe("import_attached_files", () => {
+	it("declares its files as the assistant's file inputs", async () => {
+		const client = await connect(mockApi());
+		const { tools } = await client.listTools();
+		const tool = tools.find((t) => t.name === "import_attached_files");
+		expect(tool._meta?.["openai/fileParams"]).toEqual(["files"]);
+		expect(tool.inputSchema.properties.files.items.required).toEqual(["download_url", "file_id"]);
+	});
+
+	it("imports every attached file in one call, naming each as the owner attached it", async () => {
+		const api = mockApi();
+		api.reply((c) =>
+			ok({
+				success: true,
+				upload_session_id: c.body.upload_session_id,
+				files: c.body.files.map((f) => ({ file_id: f.file_id, file_name: f.file_name, success: true })),
+				completed_file_ids: c.body.files.map((f) => f.file_id),
+				failed_file_ids: [],
+			}),
+		);
+		const { res, body } = await call(api, "import_attached_files", {
+			files: [
+				{ download_url: "https://files.oaiusercontent.com/a", file_id: "file_abc", mime_type: "application/pdf", file_name: "March invoice.pdf" },
+				{ download_url: "https://files.oaiusercontent.com/b", file_id: "file_def", mime_type: "image/png" },
+				{ download_url: "https://files.oaiusercontent.com/c", file_id: "file_ghi", mime_type: "application/pdf", file_name: "scan" },
+			],
+		});
+		expect(res.isError).toBeFalsy();
+		expect(api.calls.map((c) => `${c.method} ${c.url.pathname}`)).toEqual(["POST /v1/uploads/import"]);
+		expect(api.calls[0].body.upload_session_id).toMatch(/^sess_[0-9a-f]{16}$/);
+		expect(api.calls[0].body.files).toEqual([
+			{ file_id: "file_1", file_name: "March invoice.pdf", url: "https://files.oaiusercontent.com/a" },
+			{ file_id: "file_2", file_name: "attachment-2.png", url: "https://files.oaiusercontent.com/b" },
+			{ file_id: "file_3", file_name: "scan.pdf", url: "https://files.oaiusercontent.com/c" },
+		]);
+		expect(body.completed_file_ids).toEqual(["file_1", "file_2", "file_3"]);
+		expect(body.next_steps).toContain("run_extraction");
+	});
+
+	it("names the same session when the same files are imported again, so a retry continues it", async () => {
+		const api = mockApi();
+		const reply = (c) =>
+			ok({ success: true, upload_session_id: c.body.upload_session_id, files: [], completed_file_ids: ["file_1"], failed_file_ids: [] });
+		api.reply(reply, reply, reply);
+		const files = [{ download_url: "https://files.oaiusercontent.com/a", file_id: "file_abc", file_name: "a.pdf" }];
+		await call(api, "import_attached_files", { files });
+		await call(api, "import_attached_files", { files });
+		await call(api, "import_attached_files", { files: [{ ...files[0], file_id: "file_other" }] });
+		const ids = api.calls.map((c) => c.body.upload_session_id);
+		expect(ids[0]).toBe(ids[1]);
+		expect(ids[2]).not.toBe(ids[0]);
+	});
+
+	it("passes the API's refusal through, such as links that have expired", async () => {
+		const api = mockApi();
+		api.reply(apiError(422, "FILE_LINK_UNREADABLE", "A file's download link could not be read."));
+		const { res, body } = await call(api, "import_attached_files", {
+			files: [{ download_url: "https://files.oaiusercontent.com/a", file_id: "file_abc", file_name: "a.pdf" }],
+		});
+		expect(res.isError).toBe(true);
+		expect(body.error.code).toBe("FILE_LINK_UNREADABLE");
+	});
+});
+
 describe("create_upload_session", () => {
 	it("creates the session and fetches every file's part addresses, with generated ids when omitted", async () => {
 		const api = mockApi();
@@ -345,6 +409,9 @@ describe("get_extraction", () => {
 		expect(api.calls).toHaveLength(1);
 		expect(body.results).toBeUndefined();
 		expect(body.next_steps).toContain("get_extraction_results");
+		expect(body.dashboard_url).toBe("https://invoicedataextraction.com/dashboard/results/e1");
+		expect(body.next_steps).toContain("pages, not files");
+		expect(body.next_steps).toContain("dashboard_url");
 	});
 
 	it("passes an unknown extraction through as an error", async () => {
@@ -428,7 +495,9 @@ describe("get_output_download_url, list_extractions, cancel_extraction", () => {
 		expect(api.calls[0].url.pathname).toBe("/v1/extractions/e1/output");
 		expect(Object.fromEntries(api.calls[0].url.searchParams)).toEqual({ format: "xlsx" });
 		expect(body).toMatchObject({ download_url: "https://storage.example.com/x.xlsx?sig", format: "xlsx", expires_in_seconds: 300 });
+		expect(body.dashboard_url).toBe("https://invoicedataextraction.com/dashboard/results/e1");
 		expect(body.next_steps).toContain("no Authorization header");
+		expect(body.next_steps).toContain("five minutes");
 	});
 
 	it("lists with every filter as a query parameter", async () => {

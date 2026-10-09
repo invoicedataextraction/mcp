@@ -1,21 +1,25 @@
 // An MCP client wired straight into the worker's fetch handler, so the tests
 // speak the real protocol (discovery, tools/list, tools/call) end to end.
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
-import { createExecutionContext, waitOnExecutionContext } from "cloudflare:test";
+import { createExecutionContext, env as configuredEnv, waitOnExecutionContext } from "cloudflare:test";
 import worker from "../src/index.js";
 
 export const ORIGIN = "https://mcp.invoicedataextraction.com";
 export const KEY = "ide_test_key_1234567890";
 
+// The configured bindings and variables (the sign-in storage, the resource
+// address), with the API binding each test scripts in place of the real one.
+export const envWith = (overrides = {}) => ({ ...configuredEnv, ...overrides });
+
 export async function callWorker(path, init = {}, env = {}) {
 	const ctx = createExecutionContext();
-	const response = await worker.fetch(new Request(`${ORIGIN}${path}`, init), env, ctx);
+	const response = await worker.fetch(new Request(`${ORIGIN}${path}`, init), envWith(env), ctx);
 	await waitOnExecutionContext(ctx);
 	return response;
 }
 
 export async function connect(api, { key = KEY } = {}) {
-	const env = { API: api };
+	const env = envWith({ API: api });
 	const transport = new StreamableHTTPClientTransport(new URL(`${ORIGIN}/mcp`), {
 		requestInit: { headers: { Authorization: `Bearer ${key}` } },
 		fetch: (input, init) => worker.fetch(new Request(input, init), env, createExecutionContext()),
