@@ -49,7 +49,7 @@ const handlerFor = (api) =>
 	createMcpHandler(() => createServer(api), {
 		route: ROUTE,
 		// The server is reached with a bearer credential, never a cookie, so any
-		// origin may call it; which hostnames reach the worker is Cloudflare's routing.
+		// origin may call it; which hostnames reach the worker is set where it is deployed.
 		allowedOriginHostnames: "*",
 		onerror: (error) => console.error(`MCP handler error: ${error?.name}: ${error?.message}`),
 	});
